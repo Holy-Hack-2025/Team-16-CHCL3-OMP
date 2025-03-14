@@ -1,0 +1,165 @@
+<!-- templates/dashboard.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supply Chain Intelligence Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .environment-bar {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .role-pills {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .role-pill {
+            flex: 0 0 auto;
+            cursor: pointer;
+            padding: 0.8rem 1.5rem;
+            border-radius: 20px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s;
+        }
+        .role-pill:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        .role-pill.active {
+            background: #2ecc71;
+            color: white;
+            border-color: #27ae60;
+        }
+        .stage-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+        .stage-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Environmental Impact Bar -->
+        <div class="environment-bar">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h4 class="mb-0">🌱 Circular Economy Impact</h4>
+                    <small>Real-time sustainability metrics</small>
+                </div>
+                <div class="d-flex gap-4">
+                    <div>
+                        <div class="h2 mb-0">72%</div>
+                        <small>Recycled Content</small>
+                    </div>
+                    <div>
+                        <div class="h2 mb-0">15.2kg</div>
+                        <small>CO2 Saved</small>
+                    </div>
+                    <div>
+                        <div class="h2 mb-0">98%</div>
+                        <small>Recyclability</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Selection -->
+        <div class="role-pills">
+            <div class="role-pill" data-role="mining_engineer">⛏️ Mining</div>
+            <div class="role-pill" data-role="plant_manager">🏭 Smelting</div>
+            <div class="role-pill" data-role="production_manager">🏗️ Manufacturing</div>
+            <div class="role-pill" data-role="beverage_producer">🚰 Filling</div>
+            <div class="role-pill" data-role="logistics_manager">🚚 Logistics</div>
+            <div class="role-pill" data-role="retailer">🏪 Retail</div>
+            <div class="role-pill" data-role="recycling_tech">♻️ Recycling</div>
+            <div class="role-pill" data-role="sustainability_auditor">📊 Auditor</div>
+        </div>
+
+        <!-- Stage Data Display -->
+        <div class="stage-container" id="stage-container">
+            <div class="text-center text-muted my-auto" id="default-message">
+                Select a role to view associated supply chain stages
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.role-pill').forEach(pill => {
+            pill.addEventListener('click', async function() {
+                // Remove active state from all pills
+                document.querySelectorAll('.role-pill').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                
+                const role = this.dataset.role;
+                const container = document.getElementById('stage-container');
+                container.innerHTML = '<div class="text-center my-auto"><div class="spinner-border text-primary"></div></div>';
+                
+                try {
+                    const response = await fetch(`/api/can/CAN-2024-EU-9A8B7C/${role}`);
+                    const data = await response.json();
+                    
+                    if (Object.keys(data.stages).length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center text-muted my-auto">
+                                No stage data available for this role
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = Object.entries(data.stages).map(([stage, details]) => `
+                        <div class="stage-card">
+                            <h5 class="mb-3 text-primary">${stage.replace(/_/g, ' ').toUpperCase()}</h5>
+                            <div class="metric-list">
+                                ${Object.entries(details).map(([key, value]) => `
+                                    <div class="metric-item">
+                                        <span class="text-muted">${key.replace(/_/g, ' ')}</span>
+                                        <strong>${typeof value === 'object' ? JSON.stringify(value) : value}</strong>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                } catch(error) {
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error loading data: ${error.message}
+                        </div>
+                    `;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
